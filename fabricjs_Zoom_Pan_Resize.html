@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fabric.js Zoom and Pan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  </head>
+  <body>
+    <canvas
+      id="canvas"
+      width="1700"
+      height="800"
+      style="border: 1px solid #ccc"
+    ></canvas>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var canvas = new fabric.Canvas('canvas');
+
+        // Create a rectangle
+        var rect = new fabric.Rect({
+          left: 300,
+          top: 300,
+          width: 400,
+          height: 400,
+          fill: 'blue',
+        });
+
+        // Create a circle
+        var circle = new fabric.Circle({
+          left: 700,
+          top: 200,
+          radius: 250,
+          fill: 'red',
+        });
+
+        // Enable mouse wheel zoom
+        canvas.on('mouse:wheel', function (opt) {
+          var delta = opt.e.deltaY;
+          var zoom = canvas.getZoom();
+          zoom *= 0.999 ** delta;
+          if (zoom > 20) zoom = 20;
+          if (zoom < 0.01) zoom = 0.01;
+          canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+          opt.e.preventDefault();
+          opt.e.stopPropagation();
+        });
+
+        // Add objects to the canvas
+        canvas.add(rect, circle);
+
+        // Enable Alt + drag panning
+        var isDragging = false;
+        var lastX, lastY;
+
+        canvas.on('mouse:down', function (opt) {
+          if (opt.e.altKey) {
+            isDragging = true;
+            lastX = opt.e.clientX;
+            lastY = opt.e.clientY;
+          }
+        });
+
+        canvas.on('mouse:move', function (opt) {
+          if (isDragging) {
+            var e = opt.e;
+            var deltaX = e.clientX - lastX;
+            var deltaY = e.clientY - lastY;
+
+            canvas.relativePan(new fabric.Point(deltaX, deltaY));
+            lastX = e.clientX;
+            lastY = e.clientY;
+          }
+        });
+
+        canvas.on('mouse:up', function () {
+          isDragging = false;
+        });
+
+        // Resizing of the canvas and contents to fill the screen but maintain the ratio.
+        function canvasResize() {
+          var upperCanvas = document.getElementsByClassName('upper-canvas')[0];
+          var lowerCanvas = document.getElementsByClassName('lower-canvas')[0];
+          var canvasContainer =
+            document.getElementsByClassName('canvas-container')[0];
+
+          var aspectRatio = canvas.width / canvas.height;
+          var W = window.innerWidth; // Amount of padding on the right side.
+          var H = W / aspectRatio; // Maintain aspect ratio
+
+          canvas.setZoom(window.innerWidth / 1700);
+          canvas.setWidth(1700 * canvas.getZoom());
+          canvas.setHeight(800 * canvas.getZoom());
+        }
+
+        window.onload = function () {
+          canvasResize();
+        };
+
+        window.onresize = function () {
+          canvasResize();
+        };
+
+        window.addEventListener('orientationchange', function () {
+          canvasResize();
+        });
+      });
+    </script>
+  </body>
+</html>
